@@ -1,6 +1,10 @@
 name: main
 
-on: [push]
+on:
+  push:
+  schedule:
+    - cron: '0 11 * * *'  # todos los días a las 08:00 Fortaleza (11:00 UTC)
+  workflow_dispatch:       # permite ejecutarlo manualmente desde Actions
 
 permissions:
   contents: write   # necesario para poder hacer push a main
@@ -14,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: main   # trabaja directamente sobre la rama main
+          ref: main
 
       - uses: oven-sh/setup-bun@v1
 
@@ -34,16 +38,12 @@ jobs:
           outputs: |
             dist/svg/github-contribution-grid-snake.svg
             dist/svg/github-contribution-grid-snake-dark.svg?palette=github-dark
-            dist/svg/github-contribution-grid-snake-ocean.svg?color_snake=orange&color_dots=#dadcdf94,#8dbdff,#64a1f4,#4b91f1,#3c7dd9
-            dist/svg/github-contribution-grid-snake-grey.svg?color_snake=111&color_dots=#eee,#aaa,#888,#666,#444
 
       - name: ensure the generated file exists
         run: |
           ls -R dist/svg || true
           test -f dist/svg/github-contribution-grid-snake.svg
           test -f dist/svg/github-contribution-grid-snake-dark.svg
-          test -f dist/svg/github-contribution-grid-snake-ocean.svg
-          test -f dist/svg/github-contribution-grid-snake-grey.svg
 
       - name: commit and push SVGs to main
         env:
@@ -54,11 +54,9 @@ jobs:
           git config user.name "$GIT_AUTHOR_NAME"
           git config user.email "$GIT_AUTHOR_EMAIL"
 
-          # Copia los archivos generados a dist/svg en el repo (ya está ahí, pero aseguramos estructura)
           mkdir -p dist/svg
           ls dist/svg
 
-          # Añade y hace commit solo de los archivos SVG
           git add dist/svg/*.svg
           git commit -m "CI: update generated SVGs" || echo "No SVG changes to commit"
           git push origin main
